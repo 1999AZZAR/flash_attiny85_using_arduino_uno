@@ -5,7 +5,7 @@
  * Logic:
  * - Timer1: 1ms system tick (CTC mode)
  * - Timer0: Fast PWM (OC0A -> PB0) for dimming & fast pulsing
- * - Sequence: OFF > 25% > 50% > 75% > 100% > Flashing (Fast Pulse)
+ * - Sequence: OFF > 15% > 30% > 60% > 100% > Flashing (Fast Pulse)
  * 
  * Target: ATtiny85 @ 8MHz Internal Oscillator
  */
@@ -32,9 +32,9 @@
 
 typedef enum {
     MODE_OFF = 0,
-    MODE_DIM_25,
-    MODE_DIM_50,
-    MODE_DIM_75,
+    MODE_DIM_15,
+    MODE_DIM_30,
+    MODE_DIM_60,
     MODE_ON_100,
     MODE_FLASHING,
     MODE_MAX
@@ -130,16 +130,16 @@ static void task_led(void) {
         case MODE_OFF:
             break;
 
-        case MODE_DIM_25:
-            OCR0A = 64;
+        case MODE_DIM_15:
+            OCR0A = 38;   // ~15% duty cycle
             break;
 
-        case MODE_DIM_50:
-            OCR0A = 127;
+        case MODE_DIM_30:
+            OCR0A = 77;   // ~30% duty cycle
             break;
 
-        case MODE_DIM_75:
-            OCR0A = 191;
+        case MODE_DIM_60:
+            OCR0A = 153;  // ~60% duty cycle
             break;
 
         case MODE_ON_100:

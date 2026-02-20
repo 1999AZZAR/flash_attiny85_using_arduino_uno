@@ -12,9 +12,9 @@ A single push-button interface that cycles through six distinct LED modes. This 
 | Mode | Behavior                                |
 | ---- | --------------------------------------- |
 | 0    | **OFF** – LED fully disabled            |
-| 1    | **25%** – Low brightness                |
-| 2    | **50%** – Medium brightness             |
-| 3    | **75%** – High brightness               |
+| 1    | **15%** – Low brightness                |
+| 2    | **30%** – Medium brightness             |
+| 3    | **60%** – High brightness               |
 | 4    | **100%** – Full brightness              |
 | 5    | **FLASHING** – Pulsing (6ms step)          |
 
