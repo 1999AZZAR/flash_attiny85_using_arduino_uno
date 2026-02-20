@@ -10,10 +10,11 @@ This repository contains C/C++ examples for the ATtiny85 microcontroller. The co
 
 ## Repository Structure
 
-The examples are organized into two parts:
+The examples are organized into three parts:
 
 *   **Part 1**: Essential techniques for GPIO, Timing, and PWM.
 *   **Part 2**: Advanced system architecture, kernels, FSMs, and signal processing.
+*   **Part 3**: Extreme Power Optimization & Lifecycle Management.
 
 ## Hardware Quick Reference
 
@@ -86,6 +87,14 @@ make flash
 ### Signal Processing
 *   **[Moving Average Filter](examples/Part-02/Moving_Average_Filter/)**: smooths noisy sensor data using a windowed average algorithm.
 *   **[Capacitive Touch Button](examples/Part-02/Capacitive_Touch_Button/)**: Implements touch sensing using internal ADC/GPIO physics without specialized hardware.
+
+## Part 3: Extreme Power Optimization (`examples/Part-03`)
+
+Focus on battery-operated longevity and nano-ampere survival.
+
+*   **[Clock Scaler](examples/Part-03/clock_scaler/)**: Dynamic frequency scaling using `CLKPR` to reduce current during active processing.
+*   **[PRR Mastery](examples/Part-03/prr_control/)**: Total peripheral shutdown using the Power Reduction Register (PRR).
+*   **[ADC Noise Reduction](examples/Part-03/adc_low_power/)**: Using `SLEEP_MODE_ADC` for high-precision, low-noise sensor acquisition.
 
 ## Technical Notes
 
