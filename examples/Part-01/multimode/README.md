@@ -23,9 +23,12 @@ Design Goals:
 | Mode | Behavior                                |
 | ---- | --------------------------------------- |
 | 0    | **OFF** – LED fully disabled            |
-| 1    | **ON** – 100% duty cycle                |
-| 2    | **BLINK** – 2Hz frequency (250ms toggle)|
-| 3    | **BREATHE** – Smooth hardware-based fade|
+| 1    | **25%** – Low brightness                |
+| 2    | **50%** – Medium brightness             |
+| 3    | **75%** – High brightness               |
+| 4    | **100%** – Full brightness              |
+| 5    | **BREATHE** – Smooth hardware-based fade|
+| 6    | **FLASHING** – Fast 5Hz toggle (100ms)  |
 
 Transitions are immediate; internal task states reset automatically upon mode change.
 

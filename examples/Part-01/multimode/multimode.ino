@@ -1,5 +1,5 @@
 /*
- * ATtiny85 Multi-Mode LED Controller (Refined)
+ * ATtiny85 Multi-Mode LED Controller (Expanded)
  * Part 1.6 of the Bare Metal ATtiny85 Series
  * 
  * Logic:
@@ -7,6 +7,8 @@
  * - Timer0: Fast PWM (OC0A -> PB0) for smooth hardware dimming
  * - Non-blocking state machine with cooperative multitasking
  * - Low-power Idle sleep when the CPU is not processing tasks
+ * 
+ * Sequence: OFF > 25% > 50% > 75% > 100% > Breathe > Flashing
  * 
  * Target: ATtiny85 @ 8MHz Internal Oscillator
  */
@@ -26,7 +28,7 @@
 #define LED_PIN         PB0   // OC0A (Pin 5)
 #define BTN_PIN         PB3   // Input (Pin 2)
 
-#define BLINK_INTERVAL  250U  // 250ms (2Hz)
+#define FLASH_INTERVAL  100U  // 100ms (5Hz) Fast Flashing
 #define DEBOUNCE_MS     50U   // 50ms stable window
 #define FADE_STEP_MS    6U    // Smoothness of the breathing effect
 
@@ -34,9 +36,12 @@
 
 typedef enum {
     MODE_OFF = 0,
-    MODE_ON,
-    MODE_BLINK,
+    MODE_DIM_25,
+    MODE_DIM_50,
+    MODE_DIM_75,
+    MODE_ON_100,
     MODE_BREATHE,
+    MODE_FLASHING,
     MODE_MAX
 } mode_t;
 
@@ -122,7 +127,7 @@ static void task_led(void) {
     static uint32_t last_update = 0;
     static uint8_t brightness = 0;
     static int8_t fade_dir = 1;
-    static uint8_t blink_state = 0;
+    static uint8_t flash_state = 0;
 
     uint32_t now = millis();
 
@@ -131,10 +136,10 @@ static void task_led(void) {
         last_update = now;
         brightness = 0;
         fade_dir = 1;
-        blink_state = 0;
+        flash_state = 0;
         g_mode_changed = 0;
         
-        // Ensure LED starts from a known state when mode changes
+        // Handle hardware PWM connection/disconnection
         if (g_mode == MODE_OFF) {
             TCCR0A &= ~(1 << COM0A1); // Disconnect PWM hardware
             PORTB &= ~(1 << LED_PIN); // Force pin LOW
@@ -148,16 +153,20 @@ static void task_led(void) {
             // PWM disconnected in the change detection block above
             break;
 
-        case MODE_ON:
-            OCR0A = 255;
+        case MODE_DIM_25:
+            OCR0A = 64;   // ~25% duty cycle
             break;
 
-        case MODE_BLINK:
-            if ((now - last_update) >= BLINK_INTERVAL) {
-                last_update = now;
-                blink_state ^= 1;
-                OCR0A = blink_state ? 255 : 0;
-            }
+        case MODE_DIM_50:
+            OCR0A = 127;  // ~50% duty cycle
+            break;
+
+        case MODE_DIM_75:
+            OCR0A = 191;  // ~75% duty cycle
+            break;
+
+        case MODE_ON_100:
+            OCR0A = 255;  // 100% duty cycle
             break;
 
         case MODE_BREATHE:
@@ -170,6 +179,14 @@ static void task_led(void) {
                     fade_dir = -fade_dir;
                 }
                 OCR0A = brightness;
+            }
+            break;
+
+        case MODE_FLASHING:
+            if ((now - last_update) >= FLASH_INTERVAL) {
+                last_update = now;
+                flash_state ^= 1;
+                OCR0A = flash_state ? 255 : 0;
             }
             break;
 
