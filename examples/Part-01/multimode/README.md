@@ -1,161 +1,74 @@
-# ATtiny85 Multi-Mode LED Controller
+# ATtiny85 Multi-Mode LED Controller (Refined)
 
-Interrupt-driven, non-blocking firmware for **ATtiny85 @ 8 MHz (internal oscillator)** demonstrating deterministic timing, hardware PWM, and a cooperative task model.
+Part 1.6 of the Bare Metal ATtiny85 Series. 
+
+A deterministic, interrupt-driven firmware for the **ATtiny85 @ 8MHz** demonstrating deterministic timing, hardware PWM, and a cooperative task model with power management.
 
 ---
 
 ## Overview
 
-Single push-button interface controlling four LED modes.
+A single push-button interface that cycles through four distinct LED modes. This refined version focuses on **State Isolation** and **Power Management**.
 
-Design goals:
-
-* Zero blocking delays
-* Deterministic 1 ms system tick
-* Hardware-driven PWM (no software bit-banging)
-* Clean state isolation
-
-The main loop never stalls. All timing is derived from a hardware interrupt.
+Design Goals:
+*   **Zero Blocking Delays**: The main loop never stalls; all timing is delta-based.
+*   **Deterministic 1ms Tick**: Derived from a hardware Timer1 CTC interrupt.
+*   **Hardware PWM**: Brightness is handled entirely by the Timer0 hardware engine.
+*   **Power Optimization**: CPU enters `IDLE` sleep mode between task iterations.
 
 ---
 
-## Modes (Short Press to Cycle)
+## LED Modes (Short Press to Cycle)
 
 | Mode | Behavior                                |
 | ---- | --------------------------------------- |
-| 0    | **OFF** – LED disabled                  |
+| 0    | **OFF** – LED fully disabled            |
 | 1    | **ON** – 100% duty cycle                |
-| 2    | **BLINK** – 2 Hz (250 ms toggle)        |
-| 3    | **BREATHE** – Smooth linear fade in/out |
+| 2    | **BLINK** – 2Hz frequency (250ms toggle)|
+| 3    | **BREATHE** – Smooth hardware-based fade|
 
-Mode wraps automatically after the last state.
-
----
-
-## Hardware Connections
-
-| ATtiny85 Pin       | Signal | Description                         |
-| ------------------ | ------ | ----------------------------------- |
-| Pin 5 (PB0 / OC0A) | LED    | Anode → PB0, Cathode → GND via 220Ω |
-| Pin 2 (PB3)        | Button | One side → PB3, other → GND         |
-| Pin 8              | VCC    | 2.7V – 5.5V                         |
-| Pin 4              | GND    | Common ground                       |
-
-Button uses internal pull-up (active LOW).
+Transitions are immediate; internal task states reset automatically upon mode change.
 
 ---
 
-## Architecture
+## Technical Highlights
 
-### Timer0 — PWM Engine
+### 1. Timer1 — The System Clock
+Instead of using the heavy Arduino `millis()`, we use **Timer1** in **CTC Mode** (Clear Timer on Compare Match) to generate a precise 1ms interrupt.
+*   **Prescaler**: /64
+*   **Compare Match (`OCR1C`)**: 124 (125 counts including zero)
+*   **Frequency**: 8,000,000 / 64 / 125 = 1,000 Hz
 
-* Mode: Fast PWM
-* Output: OC0A (PB0)
-* Prescaler: /8
-* Frequency ≈ 3.9 kHz
+### 2. Timer0 — The Dimming Engine
+We use **Fast PWM** mode on Pin 5 (**PB0/OC0A**) to handle LED brightness without CPU intervention.
+*   **Resolution**: 8-bit (0-255)
+*   **Frequency**: ~3.9kHz (8MHz / 8 / 256)
 
-Handles brightness fully in hardware.
-
----
-
-### Timer1 — System Tick
-
-* Mode: CTC
-* Prescaler: /64
-* Compare: 124
-* Interrupt rate: 1 ms
-
-Generates a global millisecond counter used for:
-
-* Debounce logic
-* Blink scheduling
-* Fade stepping
-
-All time-based logic derives from this single source of truth.
+### 3. Idle Sleep Management
+To save battery life, the `main` loop ends each cycle with `sleep_cpu()`.
+*   The CPU sleeps in **Idle Mode**.
+*   The Timer1 interrupt wakes the CPU every 1ms to process the tasks.
+*   This significantly reduces power consumption compared to a "busy-wait" loop.
 
 ---
 
-## Task Model
+## Hardware Configuration
 
-Main loop:
-
-```
-while (1) {
-    button_task();
-    led_task();
-}
-```
-
-No delays. No blocking calls.
-
-### Button Handling
-
-* Edge-triggered (falling edge)
-* 50 ms software debounce
-* Mode increment with wrap
-
-### LED Scheduling
-
-Uses delta-time checks:
-
-```
-if (now - last_update >= interval)
-```
-
-Ensures cooperative multitasking behavior.
+| ATtiny85 Pin | Signal | Description |
+|---|---|---|
+| **Pin 5 (PB0)** | LED | Anode (+) via 220Ω resistor to GND |
+| **Pin 2 (PB3)** | Button | Momentary button to GND (Internal Pull-up) |
+| **Pin 8 (VCC)** | Power | 2.7V - 5.5V |
+| **Pin 4 (GND)** | Ground | Common Ground |
 
 ---
 
-## Technical Characteristics
-
-* Fully interrupt-driven timing
-* Atomic multi-byte access protection
-* Deterministic scheduling
-* Minimal RAM footprint
-* No dynamic memory
-* Compatible with ATtiny25 / ATtiny45 (memory permitting)
-
----
-
-## Fuse Configuration (Recommended)
-
-For 8 MHz internal oscillator:
-
-* CKDIV8 disabled
-* Internal 8 MHz clock
-* Brown-out detection optional (recommended for stability)
-
----
-
-## Build & Flash
-
-Using Makefile + avrdude:
+## Build and Flash
 
 ```bash
+# Compile and Upload
 make flash
+
+# Set Fuses (8MHz Internal)
+make fuses
 ```
-
-Or Arduino core (ATtinyCore / similar) with:
-
-* Clock: 8 MHz internal
-* Programmer: ISP
-
----
-
-## Extension Ideas
-
-* Gamma-corrected breathing curve
-* Long-press detection
-* Double-click mode switching
-* Sleep mode between ticks (power optimization)
-* Interrupt-based button instead of polling
-
----
-
-## Resource Usage
-
-Designed to run comfortably on:
-
-* ATtiny85 (8 KB flash)
-* ATtiny45 (4 KB flash)
-* ATtiny25 (optimized build required)
