@@ -1,14 +1,14 @@
 /*
- * ATtiny85 Multi-Mode LED Controller (Tactical)
+ * ATtiny85 Multi-Mode LED Controller (Bit-Bang Tactical)
  * Part 1.6 of the Bare Metal ATtiny85 Series
  * 
  * Logic:
  * - Timer1: 1ms high-precision system tick (CTC mode)
- * - Timer0: Fast PWM (OC0A -> PB0) for smooth hardware dimming
- * - Non-blocking state machine with cooperative multitasking
- * - Low-power Idle sleep when the CPU is not processing tasks
+ * - Timer0: Fast PWM (OC0A -> PB0) for dimming
+ * - Software Toggling for Flashing (Bypassing PWM hardware for stability)
+ * - Low-power Idle sleep
  * 
- * SEQUENCE: OFF > 25% > 50% > 75% > 100% > Quick Flashing (25ms)
+ * SEQUENCE: OFF > 25% > 50% > 75% > 100% > Tactical Flashing (25ms)
  * 
  * Target: ATtiny85 @ 8MHz Internal Oscillator
  */
@@ -25,10 +25,10 @@
 
 // ======================== CONFIGURATION ========================
 
-#define LED_PIN         PB0   // OC0A (Pin 5)
-#define BTN_PIN         PB3   // Input (Pin 2)
+#define LED_PIN         PB0   // Pin 5
+#define BTN_PIN         PB3   // Pin 2
 
-#define FLASH_INTERVAL  25U   // 25ms (20Hz) Ultra-Fast Tactical Flashing
+#define FLASH_INTERVAL  25U   // 25ms Ultra-Fast Strobe
 #define DEBOUNCE_MS     50U   // 50ms stable window
 
 // ======================== GLOBAL STATE ========================
@@ -68,7 +68,7 @@ static void hardware_init(void) {
     DDRB  &= ~(1 << BTN_PIN);
     PORTB |= (1 << BTN_PIN);
 
-    // Timer0: Fast PWM
+    // Timer0: Fast PWM (Initially disconnected from COM0A1)
     TCCR0A = (1 << WGM00) | (1 << WGM01); 
     TCCR0B = (1 << CS01); // clk/8
     OCR0A  = 0;
@@ -109,21 +109,18 @@ static void task_button(void) {
 
 static void task_led(void) {
     static uint32_t last_update = 0;
-    static uint8_t flash_state = 0;
-
     uint32_t now = millis();
 
     if (g_mode_changed) {
         last_update = now;
-        flash_state = 0;
         g_mode_changed = 0;
         
-        // Reset Hardware PWM Connection
-        if (g_mode == MODE_OFF) {
-            TCCR0A &= ~(1 << COM0A1);
-            PORTB &= ~(1 << LED_PIN);
-        } else {
+        // Connect PWM for Dimming modes, Disconnect for Static/Flash
+        if (g_mode >= MODE_DIM_25 && g_mode <= MODE_ON_100) {
             TCCR0A |= (1 << COM0A1);
+        } else {
+            TCCR0A &= ~(1 << COM0A1);
+            PORTB &= ~(1 << LED_PIN); // Ensure off
         }
     }
 
@@ -150,13 +147,11 @@ static void task_led(void) {
         case MODE_FLASHING:
             if ((now - last_update) >= FLASH_INTERVAL) {
                 last_update = now;
-                flash_state ^= 1;
-                OCR0A = flash_state ? 255 : 0;
+                PINB = (1 << LED_PIN); // ATOMIC TOGGLE via hardware register
             }
             break;
 
         default:
-            g_mode = MODE_OFF;
             break;
     }
 }
