@@ -71,7 +71,7 @@ static void hardware_init(void) {
     // 2. Timer0: Hardware Fast PWM (8-bit)
     // WGM00|WGM01: Fast PWM mode
     // COM0A1: Non-inverting PWM on OC0A (PB0)
-    TCCR0A = (1 << WGM00) | (1 << WGM01) | (1 << COM0A1);
+    TCCR0A = (1 << WGM00) | (1 << WGM01); // Don't connect COM0A1 yet
     // CS01: Prescaler clk/8 -> ~3.9kHz PWM frequency
     TCCR0B = (1 << CS01); 
     OCR0A  = 0;                    // Start at 0% duty cycle
@@ -133,11 +133,19 @@ static void task_led(void) {
         fade_dir = 1;
         blink_state = 0;
         g_mode_changed = 0;
+        
+        // Ensure LED starts from a known state when mode changes
+        if (g_mode == MODE_OFF) {
+            TCCR0A &= ~(1 << COM0A1); // Disconnect PWM hardware
+            PORTB &= ~(1 << LED_PIN); // Force pin LOW
+        } else {
+            TCCR0A |= (1 << COM0A1);  // Reconnect PWM hardware
+        }
     }
 
     switch (g_mode) {
         case MODE_OFF:
-            OCR0A = 0;
+            // PWM disconnected in the change detection block above
             break;
 
         case MODE_ON:
