@@ -33,7 +33,7 @@ Common pinout used across most examples:
 Follow the [ISP Setup Guide](GUIDE.md) to configure your Arduino Uno as a programmer.
 *   **Programmer**: Arduino Uno
 *   **Target**: ATtiny85
-*   **Clock**: 8MHz Internal
+*   **Clock**: 8MHz Internal (16MHz PLL for Motor Control)
 
 ### 2. Software Dependencies
 Ensure your Linux environment has the necessary AVR toolchain:
@@ -65,6 +65,9 @@ make flash
 *   **[Multimode](examples/Part-01/multimode/)**: A sophisticated non-blocking controller. Cycles through multiple modes (Off, On, Blink, Breathe). Demonstrates **Timer1 Interrupts** for system timing and multitasking.
 
 ## Part 2: Advanced System Architecture (`examples/Part-02`)
+
+### Real-Time Control
+*   **[Closed Loop Motor Control](examples/Part-02/Closed-Loop-Motor-Control/)**: A high-performance PI controller maintaining exactly **1440 RPM** via Hall Sensor feedback. Demonstrates **Adaptive Soft-Start**, **16MHz PLL Clock**, and **Interrupt-based Precision Timing**.
 
 ### System Architecture & Power
 *   **[Tiny Cooperative Kernel](examples/Part-02/Tiny-Cooperative-Kernel/)**: A lightweight, non-preemptive task scheduler. Executes functions at fixed intervals without an RTOS.
