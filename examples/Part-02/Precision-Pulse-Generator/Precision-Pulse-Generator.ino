@@ -5,7 +5,7 @@
  * Logic:
  * - Timer1 in CTC (Clear Timer on Compare Match) mode.
  * - Generates a highly precise 1Hz signal (heartbeat).
- * - Uses Timer1 Interrupt to toggle PB1 (OC1A) for zero-jitter timing.
+ * - Uses Timer1 Interrupt to toggle PB0 (Pin 5) for zero-jitter timing.
  * 
  * Target: ATtiny85 @ 8MHz Internal Oscillator
  */
@@ -19,16 +19,8 @@
 
 // ======================== CONFIGURATION ========================
 
-#define OUTPUT_PIN      PB1   // Pin 6 (OC1A)
+#define OUTPUT_PIN      PB0   // Pin 5 (Existing LED)
 #define HEARTBEAT_HZ    1     // 1 Pulse per second (1Hz)
-
-// For 8MHz clock:
-// 8,000,000 / 8192 (prescaler) = 976.5625 ticks per second.
-// We want 1Hz toggle, so we need 976.5625 / 2 = 488.28 ticks per half-cycle.
-// Since Timer1 is 8-bit (max 255), we use a software divider inside the ISR.
-
-volatile uint16_t g_overflow_count = 0;
-#define TARGET_OVERFLOWS 4 // (976 / 250) approx 4 interrupts per half-cycle
 
 // ======================== INTERRUPTS ========================
 
@@ -36,11 +28,11 @@ ISR(TIMER1_COMPA_vect) {
     static uint16_t counter = 0;
     counter++;
     
-    // 8MHz / 16384 prescaler = 488.28 Hz
+    // 8MHz / 16384 prescaler = 488.28 Hz ticks
     // 488 counts = 1 second total.
     // 244 counts = 500ms (Toggle point for 1Hz)
     if (counter >= 244) {
-        PINB = (1 << OUTPUT_PIN); // Atomic Toggle
+        PINB = (1 << OUTPUT_PIN); // Atomic Toggle via hardware register
         counter = 0;
     }
 }
@@ -48,7 +40,7 @@ ISR(TIMER1_COMPA_vect) {
 // ======================== INITIALIZATION ========================
 
 static void timer1_init(void) {
-    // 1. Set PB1 as Output
+    // 1. Set PB0 as Output
     DDRB |= (1 << OUTPUT_PIN);
     PORTB &= ~(1 << OUTPUT_PIN);
 
@@ -59,7 +51,6 @@ static void timer1_init(void) {
     // 3. Set Compare Match Value
     // OCR1C is the resolution for Timer1 in CTC mode.
     // At /16384 prescaler, 1 tick = 2.048ms.
-    // We don't need to change OCR1C frequently, we use it as a fixed base tick.
     OCR1C = 255; 
 
     // 4. Enable Compare Match Interrupt

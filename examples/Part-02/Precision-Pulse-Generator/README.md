@@ -18,7 +18,7 @@ This example demonstrates how to use **Timer1** in **CTC (Clear Timer on Compare
 ## Hardware Connection
 | ATtiny85 Pin | Signal | Notes |
 |---|---|---|
-| **Pin 6 (PB1)** | Pulse Output | 1Hz Square Wave (50% Duty Cycle) |
+| **Pin 5 (PB0)** | Pulse Output | 1Hz Heartbeat LED |
 | **Pin 4 (GND)** | Ground | Common Ground |
 
 ## Build and Flash
