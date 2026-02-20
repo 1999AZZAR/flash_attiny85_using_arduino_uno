@@ -1,11 +1,11 @@
 /*
- * ATtiny85 Production Blink - 8MHz Internal
+ * ATtiny85 Production Blink - 1MHz Internal
  * Security: Direct register access to prevent unintended pin states
  * Performance: Optimized bit-toggling via PINB
  */
 
 #ifndef F_CPU
-#define F_CPU 8000000UL // Tell the compiler we are at 8MHz
+#define F_CPU 1000000UL // Tell the compiler we are at 1MHz
 #endif
 
 #include <avr/io.h>
@@ -25,7 +25,7 @@ int main(void) {
         // toggles the corresponding PORTB bit in 1 clock cycle.
         PINB |= (1 << PB0);
 
-        // Precise delay for 8MHz
+        // Precise delay for 1MHz
         _delay_ms(500);
     }
 

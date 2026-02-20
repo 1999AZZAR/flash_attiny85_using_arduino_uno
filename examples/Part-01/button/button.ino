@@ -1,11 +1,11 @@
 /*
- * ATtiny85 Production Button Toggle - 8MHz Internal
+ * ATtiny85 Production Button Toggle - 1MHz Internal
  * Security: Uses input pull-up resistors to prevent floating pins
  * Performance: Direct PIN reading with software debounce
  */
 
 #ifndef F_CPU
-#define F_CPU 8000000UL
+#define F_CPU 1000000UL
 #endif
 
 #include <avr/io.h>

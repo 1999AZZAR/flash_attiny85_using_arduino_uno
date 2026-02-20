@@ -1,11 +1,11 @@
 /*
- * ATtiny85 Production Fade - 8MHz Internal
+ * ATtiny85 Production Fade - 1MHz Internal
  * Security: Uses hardware peripherals to reduce CPU load and potential blocking exploits
  * Performance: Hardware PWM (Timer0) allows CPU-independent signal generation
  */
 
 #ifndef F_CPU
-#define F_CPU 8000000UL
+#define F_CPU 1000000UL
 #endif
 
 #include <avr/io.h>
@@ -26,11 +26,11 @@ int main(void) {
     TCCR0A = (1 << COM0A1) | (1 << WGM00) | (1 << WGM01);
 
     /*
-     * Start Timer0 with Prescaler /8
-     * CS01: Clock Select /8
-     * Frequency = 8MHz / (256 * 8) ~= 3.9kHz (flicker-free)
+     * Start Timer0 with Prescaler /1
+     * CS00: Clock Select /1
+     * Frequency = 1MHz / (256 * 1) ~= 3.9kHz (flicker-free)
      */
-    TCCR0B = (1 << CS01);
+    TCCR0B = (1 << CS00);
 
     uint8_t brightness = 0;
     int8_t step = 1;

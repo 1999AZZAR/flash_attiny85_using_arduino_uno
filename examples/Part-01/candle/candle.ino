@@ -1,11 +1,11 @@
 /*
- * ATtiny85 Production Candle - 8MHz Internal
+ * ATtiny85 Production Candle - 1MHz Internal
  * Security: Uses hardware peripherals and secure PRNG seeding (LFSR)
  * Performance: Hardware PWM (Timer0) allows CPU-independent signal generation
  */
 
 #ifndef F_CPU
-#define F_CPU 8000000UL
+#define F_CPU 1000000UL
 #endif
 
 #include <avr/io.h>

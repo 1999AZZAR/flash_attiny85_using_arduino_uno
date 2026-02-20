@@ -29,6 +29,6 @@ Instead of the overhead of function calls, we write directly to the hardware por
 # Compile and Upload
 make flash
 
-# Set Fuses (8MHz Internal) - Run once
+# Set Fuses (1MHz Internal) - Run once
 make fuses
 ```
