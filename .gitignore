@@ -1,0 +1,70 @@
+# ----------------------------------------------------------------------
+# Build Artifacts (AVR/GCC)
+# ----------------------------------------------------------------------
+*.hex
+*.elf
+*.eep
+*.map
+*.lss
+*.sym
+*.o
+*.obj
+*.a
+*.so
+*.lst
+*.d
+
+# ----------------------------------------------------------------------
+# IDE & Editor Configuration
+# ----------------------------------------------------------------------
+# VS Code / Cursor
+.vscode/
+.cursor/
+*.code-workspace
+
+# Arduino IDE
+build/
+local/
+__vm/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim / Emacs / General Backup Files
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# ----------------------------------------------------------------------
+# OS Generated Files
+# ----------------------------------------------------------------------
+# Linux
+.directory
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ----------------------------------------------------------------------
+# Logs & Databases
+# ----------------------------------------------------------------------
+*.log
+*.sqlite
+
+# ----------------------------------------------------------------------
+# Specific Project Temporary Files
+# ----------------------------------------------------------------------
+# Ignore any "test" or "temp" directories created during development
+temp/
+tmp/
+test/
