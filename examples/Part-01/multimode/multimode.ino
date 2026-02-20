@@ -1,16 +1,11 @@
 /*
- * ATtiny85 Multi-Mode LED Controller (Bit-Bang Tactical)
+ * ATtiny85 Multi-Mode LED Controller (Rock Solid Tactical)
  * Part 1.6 of the Bare Metal ATtiny85 Series
  * 
  * Logic:
  * - Timer1: 1ms high-precision system tick (CTC mode)
  * - Timer0: Fast PWM (OC0A -> PB0) for dimming
- * - Software Toggling for Flashing (Bypassing PWM hardware for stability)
- * - Low-power Idle sleep
- * 
- * SEQUENCE: OFF > 25% > 50% > 75% > 100% > Tactical Flashing (25ms)
- * 
- * Target: ATtiny85 @ 8MHz Internal Oscillator
+ * - Sequence: OFF > 25% > 50% > 75% > 100% > Quick Flashing (50ms)
  */
 
 #ifndef F_CPU
@@ -28,7 +23,7 @@
 #define LED_PIN         PB0   // Pin 5
 #define BTN_PIN         PB3   // Pin 2
 
-#define FLASH_INTERVAL  25U   // 25ms Ultra-Fast Strobe
+#define FLASH_INTERVAL  50U   // 50ms (10Hz) - More visible than 25ms
 #define DEBOUNCE_MS     50U   // 50ms stable window
 
 // ======================== GLOBAL STATE ========================
@@ -68,7 +63,7 @@ static void hardware_init(void) {
     DDRB  &= ~(1 << BTN_PIN);
     PORTB |= (1 << BTN_PIN);
 
-    // Timer0: Fast PWM (Initially disconnected from COM0A1)
+    // Timer0: Fast PWM
     TCCR0A = (1 << WGM00) | (1 << WGM01); 
     TCCR0B = (1 << CS01); // clk/8
     OCR0A  = 0;
@@ -109,18 +104,20 @@ static void task_button(void) {
 
 static void task_led(void) {
     static uint32_t last_update = 0;
+    static uint8_t flash_val = 0;
     uint32_t now = millis();
 
     if (g_mode_changed) {
         last_update = now;
         g_mode_changed = 0;
+        flash_val = 0;
         
-        // Connect PWM for Dimming modes, Disconnect for Static/Flash
+        // Ensure PWM hardware is connected only when needed
         if (g_mode >= MODE_DIM_25 && g_mode <= MODE_ON_100) {
             TCCR0A |= (1 << COM0A1);
         } else {
             TCCR0A &= ~(1 << COM0A1);
-            PORTB &= ~(1 << LED_PIN); // Ensure off
+            PORTB &= ~(1 << LED_PIN); // Physical OFF
         }
     }
 
@@ -147,7 +144,12 @@ static void task_led(void) {
         case MODE_FLASHING:
             if ((now - last_update) >= FLASH_INTERVAL) {
                 last_update = now;
-                PINB = (1 << LED_PIN); // ATOMIC TOGGLE via hardware register
+                flash_val ^= 1;
+                if (flash_val) {
+                    PORTB |= (1 << LED_PIN);
+                } else {
+                    PORTB &= ~(1 << LED_PIN);
+                }
             }
             break;
 
