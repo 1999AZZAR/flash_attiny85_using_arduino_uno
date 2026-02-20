@@ -87,6 +87,7 @@ make flash
 ### Signal Processing
 *   **[Moving Average Filter](examples/Part-02/Moving_Average_Filter/)**: smooths noisy sensor data using a windowed average algorithm.
 *   **[Capacitive Touch Button](examples/Part-02/Capacitive_Touch_Button/)**: Implements touch sensing using internal ADC/GPIO physics without specialized hardware.
+*   **[Precision Pulse Generator](examples/Part-02/Precision-Pulse-Generator/)**: Generates a highly accurate 1Hz heartbeat signal using Timer1 in CTC mode.
 
 ## Part 3: Extreme Power Optimization (`examples/Part-03`)
 
