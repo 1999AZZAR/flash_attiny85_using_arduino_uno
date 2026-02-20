@@ -26,7 +26,7 @@
 #define BTN_PIN         PB3   // Input (Pin 2)
 
 #define DEBOUNCE_MS     50U   // 50ms stable window
-#define FLASH_STEP_MS   2U    // Ultra-fast pulsing (approx 1s full cycle)
+#define FLASH_STEP_MS   6U    // Fast pulsing (approx 3s full cycle)
 
 // ======================== GLOBAL STATE ========================
 

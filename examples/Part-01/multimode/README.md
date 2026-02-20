@@ -16,12 +16,12 @@ A single push-button interface that cycles through six distinct LED modes. This 
 | 2    | **50%** – Medium brightness             |
 | 3    | **75%** – High brightness               |
 | 4    | **100%** – Full brightness              |
-| 5    | **FLASHING** – High-speed pulsing (2ms step)|
+| 5    | **FLASHING** – Pulsing (6ms step)          |
 
 ---
 
 ## Key Refinements
-- **Fast Pulsing**: The old "Breathe" mode is accelerated and renamed to "Flashing" to create a more dynamic, pulsing visual effect.
+- **Pulsing Mode**: The old "Breathe" mode is tuned and renamed to "Flashing" to create a more dynamic, pulsing visual effect.
 - **Hardware PWM Consistency**: Uses Timer0 hardware PWM for all active modes to ensure flicker-free dimming.
 - **Zero-Latency Transition**: Internal task variables reset immediately upon mode change for instant tactile feedback.
 
