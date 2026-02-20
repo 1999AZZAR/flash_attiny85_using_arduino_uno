@@ -5,7 +5,7 @@
  */
 
 #ifndef F_CPU
-#define F_CPU 1000000UL // Tell the compiler we are at 1MHz
+#define F_CPU 8000000UL // Tell the compiler we are at 1MHz
 #endif
 
 #include <avr/io.h>

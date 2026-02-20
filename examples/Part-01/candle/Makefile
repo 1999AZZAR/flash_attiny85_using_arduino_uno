@@ -1,7 +1,7 @@
 # Makefile for ATtiny85 Candle Example
 
 MCU = attiny85
-F_CPU = 1000000L
+F_CPU = 8000000L
 PROGRAMMER = arduino
 PORT = /dev/ttyACM0
 BAUD = 19200
@@ -25,7 +25,7 @@ flash: $(TARGET).hex
 	$(AVRDUDE) -c $(PROGRAMMER) -p $(MCU) -P $(PORT) -b $(BAUD) -U flash:w:$<:i
 
 fuses:
-	$(AVRDUDE) -c $(PROGRAMMER) -p $(MCU) -P $(PORT) -b $(BAUD) -U lfuse:w:0x62:m
+	$(AVRDUDE) -c $(PROGRAMMER) -p $(MCU) -P $(PORT) -b $(BAUD) -U lfuse:w:0xe2:m
 
 clean:
 	rm -f *.elf *.hex

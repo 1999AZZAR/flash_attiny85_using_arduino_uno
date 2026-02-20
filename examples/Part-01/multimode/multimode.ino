@@ -7,11 +7,11 @@
  * - Timer0: Fast PWM (OC0A -> PB0) for dimming & fast pulsing
  * - Sequence: OFF > 15% > 30% > 60% > 100% > Flashing (Fast Pulse)
  * 
- * Target: ATtiny85 @ 1MHz Internal Oscillator
+ * Target: ATtiny85 @ 8MHz Internal Oscillator
  */
 
 #ifndef F_CPU
-#define F_CPU 1000000UL
+#define F_CPU 8000000UL
 #endif
 
 #include <avr/io.h>
@@ -67,12 +67,11 @@ static void hardware_init(void) {
 
     // Timer0: Fast PWM (8-bit)
     TCCR0A = (1 << WGM00) | (1 << WGM01); 
-    TCCR0B = (1 << CS00); // clk/1 -> ~3.9kHz (at 1MHz)
+    TCCR0B = (1 << CS01); // clk/8 -> ~3.9kHz
     OCR0A  = 0;
 
     // Timer1: 1ms Tick
-    // 1MHz / 8 = 125kHz -> 125 counts = 1ms
-    TCCR1  = (1 << CTC1) | (1 << CS12); // clk/8
+    TCCR1  = (1 << CTC1) | (1 << CS11) | (1 << CS10); // clk/64
     OCR1C  = 124;
     TIMSK |= (1 << OCIE1A);
 
