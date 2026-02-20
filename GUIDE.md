@@ -4,27 +4,33 @@ This document outlines the procedure for using an Arduino Uno as an ISP programm
 
 ## 1. Hardware Requirements
 
-### Complete Development BOM (Bill of Materials)
-
-To build the full development circuit capable of running all examples in this repository, you will need:
+### A. Minimal Flash Setup (Essential)
+This is the bare minimum hardware required to connect, verify, and flash the ATtiny85.
 
 | Component | Quantity | Purpose | Placement |
 |---|---|---|---|
 | **ATtiny85** | 1 | Microcontroller | Breadboard center |
 | **Arduino Uno** | 1 | ISP Programmer | Connected via jumper wires |
-| **Capacitor (10µF - 100µF)** | 2 | 1x Programmer Stability<br>1x Target Power Stability | **Cap 1:** Uno `RESET` to `GND`<br>**Cap 2:** ATtiny `VCC` to `GND` |
+| **Capacitor (10µF)** | 1 | Programmer Stability | Uno `RESET` to `GND` |
+
+### B. Full Development Circuit (Complete)
+To run all examples (Buttons, LEDs, Stability) in this repository, add these components:
+
+| Component | Quantity | Purpose | Placement |
+|---|---|---|---|
+| **Capacitor (100µF)** | 1 | Target Power Stability | ATtiny `VCC` to `GND` |
 | **Push Button** | 2 | 1x User Input<br>1x System Reset | **Btn 1:** `PB3` (Pin 2) to `GND`<br>**Btn 2:** `RESET` (Pin 1) to `GND` |
 | **LED** | 1 | Output Indicator | `PB0` (Pin 5) to `GND` |
 | **Resistor (220Ω)** | 1 | Current Limiting | In series with LED |
 
 ### Capacitor Placement Detail
 
-1.  **Programmer Anti-Reset (Crucial):**
+1.  **Programmer Anti-Reset (Essential):**
     *   Place a **10µF - 100µF Capacitor** between Arduino Uno `RESET` and `GND`.
     *   **Polarity:** Positive (+) to `RESET`, Negative (-) to `GND`.
     *   **Why:** Prevents the Uno from resetting itself when avrdude tries to talk to it.
 
-2.  **Target Power Smoothing:**
+2.  **Target Power Smoothing (Complete):**
     *   Place a **100µF Capacitor** on the breadboard power rails (or close to ATtiny `VCC`/`GND`).
     *   **Why:** Smooths out voltage dips when the LED flashes or the MCU wakes from sleep.
 
