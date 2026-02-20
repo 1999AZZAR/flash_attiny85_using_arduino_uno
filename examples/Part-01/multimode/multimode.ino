@@ -1,13 +1,13 @@
 /*
- * ATtiny85 Multi-Mode LED Controller (The Final Stand)
+ * ATtiny85 Multi-Mode LED Controller (The Final Stand - V2)
  * Part 1.6 of the Bare Metal ATtiny85 Series
  * 
  * Logic:
  * - Timer1: 1ms system tick (CTC mode)
- * - Timer0: Fast PWM (OC0A -> PB0) for dimming & breathing
- * - Software Toggling for Flashing (Disabling PWM)
+ * - Timer0: Fast PWM (OC0A -> PB0) for dimming & fast pulsing
+ * - Sequence: OFF > 25% > 50% > 75% > 100% > Flashing (Fast Pulse)
  * 
- * SEQUENCE: OFF > 25% > 50% > 75% > 100% > Breathe > Quick Flashing
+ * Target: ATtiny85 @ 8MHz Internal Oscillator
  */
 
 #ifndef F_CPU
@@ -25,9 +25,8 @@
 #define LED_PIN         PB0   // OC0A (Pin 5)
 #define BTN_PIN         PB3   // Input (Pin 2)
 
-#define FLASH_INTERVAL  25U   // 25ms Ultra-Fast Strobe (Tactical)
 #define DEBOUNCE_MS     50U   // 50ms stable window
-#define BREATHE_STEP_MS 10U   // Approx 5s per breathe cycle
+#define FLASH_STEP_MS   2U    // Ultra-fast pulsing (approx 1s full cycle)
 
 // ======================== GLOBAL STATE ========================
 
@@ -37,7 +36,6 @@ typedef enum {
     MODE_DIM_50,
     MODE_DIM_75,
     MODE_ON_100,
-    MODE_BREATHE,
     MODE_FLASHING,
     MODE_MAX
 } mode_t;
@@ -68,7 +66,6 @@ static void hardware_init(void) {
     PORTB |= (1 << BTN_PIN); // Internal Pull-up
 
     // Timer0: Fast PWM (8-bit)
-    // Initially disconnected from OC0A
     TCCR0A = (1 << WGM00) | (1 << WGM01); 
     TCCR0B = (1 << CS01); // clk/8 -> ~3.9kHz
     OCR0A  = 0;
@@ -111,7 +108,6 @@ static void task_led(void) {
     static uint32_t last_update = 0;
     static uint8_t brightness = 0;
     static int8_t fade_dir = 1;
-    static uint8_t flash_val = 0;
 
     uint32_t now = millis();
 
@@ -119,13 +115,11 @@ static void task_led(void) {
         last_update = now;
         brightness = 0;
         fade_dir = 1;
-        flash_val = 0;
         g_mode_changed = 0;
         
         // --- MODE MANAGEMENT LOGIC ---
-        // Disconnect PWM for OFF and FLASHING
-        if (g_mode == MODE_OFF || g_mode == MODE_FLASHING) {
-            TCCR0A &= ~(1 << COM0A1); // Force disconnect PWM
+        if (g_mode == MODE_OFF) {
+            TCCR0A &= ~(1 << COM0A1); // Disconnect PWM
             PORTB &= ~(1 << LED_PIN); // Physical LOW
         } else {
             TCCR0A |= (1 << COM0A1);  // Connect PWM hardware
@@ -134,7 +128,6 @@ static void task_led(void) {
 
     switch (g_mode) {
         case MODE_OFF:
-            // Handled by g_mode_changed block
             break;
 
         case MODE_DIM_25:
@@ -153,27 +146,14 @@ static void task_led(void) {
             OCR0A = 255;
             break;
 
-        case MODE_BREATHE:
-            if ((now - last_update) >= BREATHE_STEP_MS) {
+        case MODE_FLASHING:
+            if ((now - last_update) >= FLASH_STEP_MS) {
                 last_update = now;
                 brightness += fade_dir;
                 if (brightness == 0 || brightness == 255) {
                     fade_dir = -fade_dir;
                 }
                 OCR0A = brightness;
-            }
-            break;
-
-        case MODE_FLASHING:
-            if ((now - last_update) >= FLASH_INTERVAL) {
-                last_update = now;
-                flash_val ^= 1;
-                // Since PWM is disconnected, we drive PORTB directly
-                if (flash_val) {
-                    PORTB |= (1 << LED_PIN);
-                } else {
-                    PORTB &= ~(1 << LED_PIN);
-                }
             }
             break;
 
