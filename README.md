@@ -95,6 +95,8 @@ Focus on battery-operated longevity and nano-ampere survival.
 *   **[Clock Scaler](examples/Part-03/clock_scaler/)**: Dynamic frequency scaling using `CLKPR` to reduce current during active processing.
 *   **[PRR Mastery](examples/Part-03/prr_control/)**: Total peripheral shutdown using the Power Reduction Register (PRR).
 *   **[ADC Noise Reduction](examples/Part-03/adc_low_power/)**: Using `SLEEP_MODE_ADC` for high-precision, low-noise sensor acquisition.
+*   **[External Wakeup](examples/Part-03/external_wakeup/)**: Deep Sleep (Power-Down) with Pin Change Interrupt (PCINT) wakeup for immediate response.
+*   **[Battery Check](examples/Part-03/battery_check/)**: Monitoring VCC using the Internal 1.1V Bandgap reference with **zero external components**.
 
 ## Technical Notes
 
