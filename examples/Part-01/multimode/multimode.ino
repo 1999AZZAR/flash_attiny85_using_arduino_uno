@@ -1,5 +1,5 @@
 /*
- * ATtiny85 Multi-Mode LED Controller (Fully Refined)
+ * ATtiny85 Multi-Mode LED Controller (Tactical)
  * Part 1.6 of the Bare Metal ATtiny85 Series
  * 
  * Logic:
@@ -8,7 +8,7 @@
  * - Non-blocking state machine with cooperative multitasking
  * - Low-power Idle sleep when the CPU is not processing tasks
  * 
- * SEQUENCE: OFF > 25% > 50% > 75% > 100% > Breathe > Flashing
+ * SEQUENCE: OFF > 25% > 50% > 75% > 100% > Quick Flashing (25ms)
  * 
  * Target: ATtiny85 @ 8MHz Internal Oscillator
  */
@@ -28,9 +28,8 @@
 #define LED_PIN         PB0   // OC0A (Pin 5)
 #define BTN_PIN         PB3   // Input (Pin 2)
 
-#define FLASH_INTERVAL  100U  // 100ms (5Hz) Quick Flashing
+#define FLASH_INTERVAL  25U   // 25ms (20Hz) Ultra-Fast Tactical Flashing
 #define DEBOUNCE_MS     50U   // 50ms stable window
-#define FADE_STEP_MS    10U   // Slower, smoother breathing (approx 5s cycle)
 
 // ======================== GLOBAL STATE ========================
 
@@ -40,7 +39,6 @@ typedef enum {
     MODE_DIM_50,
     MODE_DIM_75,
     MODE_ON_100,
-    MODE_BREATHE,
     MODE_FLASHING,
     MODE_MAX
 } mode_t;
@@ -111,16 +109,12 @@ static void task_button(void) {
 
 static void task_led(void) {
     static uint32_t last_update = 0;
-    static uint8_t brightness = 0;
-    static int8_t fade_dir = 1;
     static uint8_t flash_state = 0;
 
     uint32_t now = millis();
 
     if (g_mode_changed) {
         last_update = now;
-        brightness = 0;
-        fade_dir = 1;
         flash_state = 0;
         g_mode_changed = 0;
         
@@ -151,17 +145,6 @@ static void task_led(void) {
 
         case MODE_ON_100:
             OCR0A = 255;
-            break;
-
-        case MODE_BREATHE:
-            if ((now - last_update) >= FADE_STEP_MS) {
-                last_update = now;
-                brightness += fade_dir;
-                if (brightness == 0 || brightness == 255) {
-                    fade_dir = -fade_dir;
-                }
-                OCR0A = brightness;
-            }
             break;
 
         case MODE_FLASHING:

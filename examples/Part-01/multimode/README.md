@@ -27,8 +27,7 @@ Design Goals:
 | 2    | **50%** – Medium brightness             |
 | 3    | **75%** – High brightness               |
 | 4    | **100%** – Full brightness              |
-| 5    | **BREATHE** – Smooth hardware-based fade|
-| 6    | **FLASHING** – Fast 5Hz toggle (100ms)  |
+| 5    | **FLASHING** – Tactical 20Hz toggle (25ms)|
 
 Transitions are immediate; internal task states reset automatically upon mode change.
 
