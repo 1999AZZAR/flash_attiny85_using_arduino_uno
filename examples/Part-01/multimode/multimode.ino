@@ -1,5 +1,5 @@
 /*
- * ATtiny85 Multi-Mode LED Controller (Expanded)
+ * ATtiny85 Multi-Mode LED Controller (Fully Refined)
  * Part 1.6 of the Bare Metal ATtiny85 Series
  * 
  * Logic:
@@ -8,7 +8,7 @@
  * - Non-blocking state machine with cooperative multitasking
  * - Low-power Idle sleep when the CPU is not processing tasks
  * 
- * Sequence: OFF > 25% > 50% > 75% > 100% > Breathe > Flashing
+ * SEQUENCE: OFF > 25% > 50% > 75% > 100% > Breathe > Flashing
  * 
  * Target: ATtiny85 @ 8MHz Internal Oscillator
  */
@@ -28,9 +28,9 @@
 #define LED_PIN         PB0   // OC0A (Pin 5)
 #define BTN_PIN         PB3   // Input (Pin 2)
 
-#define FLASH_INTERVAL  100U  // 100ms (5Hz) Fast Flashing
+#define FLASH_INTERVAL  100U  // 100ms (5Hz) Quick Flashing
 #define DEBOUNCE_MS     50U   // 50ms stable window
-#define FADE_STEP_MS    6U    // Smoothness of the breathing effect
+#define FADE_STEP_MS    10U   // Slower, smoother breathing (approx 5s cycle)
 
 // ======================== GLOBAL STATE ========================
 
@@ -47,16 +47,14 @@ typedef enum {
 
 static volatile uint32_t g_tick = 0;
 static mode_t g_mode = MODE_OFF;
-static uint8_t g_mode_changed = 0; // Flag to reset task internals
+static uint8_t g_mode_changed = 0; 
 
 // ======================== TIMING & INTERRUPTS ========================
 
-// Timer1 CTC Interrupt: Fires every 1ms
 ISR(TIMER1_COMPA_vect) {
     g_tick++;
 }
 
-// Thread-safe millisecond counter
 static uint32_t millis(void) {
     uint32_t t;
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
@@ -68,61 +66,49 @@ static uint32_t millis(void) {
 // ======================== INITIALIZATION ========================
 
 static void hardware_init(void) {
-    // 1. GPIO Setup
-    DDRB  |= (1 << LED_PIN);       // LED as output
-    DDRB  &= ~(1 << BTN_PIN);      // Button as input
-    PORTB |= (1 << BTN_PIN);       // Enable internal pull-up
+    DDRB  |= (1 << LED_PIN);
+    DDRB  &= ~(1 << BTN_PIN);
+    PORTB |= (1 << BTN_PIN);
 
-    // 2. Timer0: Hardware Fast PWM (8-bit)
-    // WGM00|WGM01: Fast PWM mode
-    // COM0A1: Non-inverting PWM on OC0A (PB0)
-    TCCR0A = (1 << WGM00) | (1 << WGM01); // Don't connect COM0A1 yet
-    // CS01: Prescaler clk/8 -> ~3.9kHz PWM frequency
-    TCCR0B = (1 << CS01); 
-    OCR0A  = 0;                    // Start at 0% duty cycle
+    // Timer0: Fast PWM
+    TCCR0A = (1 << WGM00) | (1 << WGM01); 
+    TCCR0B = (1 << CS01); // clk/8
+    OCR0A  = 0;
 
-    // 3. Timer1: 1ms System Tick Generator (CTC Mode)
-    // 8MHz / 64 = 125,000Hz -> 125 counts = 1ms
+    // Timer1: 1ms Tick
     TCCR1  = (1 << CTC1) | (1 << CS11) | (1 << CS10); // clk/64
-    OCR1C  = 124;                  // 0-indexed count to 125
-    TIMSK |= (1 << OCIE1A);        // Enable Compare Match A interrupt
+    OCR1C  = 124;
+    TIMSK |= (1 << OCIE1A);
 
-    // 4. Power Management
-    set_sleep_mode(SLEEP_MODE_IDLE); // Stay in Idle to keep Timers running
+    set_sleep_mode(SLEEP_MODE_IDLE);
 }
 
 // ======================== TASKS ========================
 
-// Handle button debouncing and mode switching
 static void task_button(void) {
-    static uint8_t button_state = 1; // High (pull-up active)
+    static uint8_t button_state = 1;
     static uint32_t last_debounce_time = 0;
-    
+    static uint8_t last_reading = 1;
+
     uint8_t reading = (PINB & (1 << BTN_PIN)) ? 1 : 0;
     uint32_t now = millis();
 
-    // Reset debounce timer if state changes
-    static uint8_t last_reading = 1;
     if (reading != last_reading) {
         last_debounce_time = now;
         last_reading = reading;
     }
 
-    // Process only if signal is stable for the debounce window
     if ((now - last_debounce_time) > DEBOUNCE_MS) {
         if (reading != button_state) {
             button_state = reading;
-            
-            // On Button Press (Falling Edge)
             if (button_state == 0) {
                 g_mode = (mode_t)((g_mode + 1) % MODE_MAX);
-                g_mode_changed = 1; // Signal tasks to reset their state
+                g_mode_changed = 1; 
             }
         }
     }
 }
 
-// Handle LED behavior based on current mode
 static void task_led(void) {
     static uint32_t last_update = 0;
     static uint8_t brightness = 0;
@@ -131,7 +117,6 @@ static void task_led(void) {
 
     uint32_t now = millis();
 
-    // Reset local state variables on mode transition for immediate effect
     if (g_mode_changed) {
         last_update = now;
         brightness = 0;
@@ -139,41 +124,38 @@ static void task_led(void) {
         flash_state = 0;
         g_mode_changed = 0;
         
-        // Handle hardware PWM connection/disconnection
+        // Reset Hardware PWM Connection
         if (g_mode == MODE_OFF) {
-            TCCR0A &= ~(1 << COM0A1); // Disconnect PWM hardware
-            PORTB &= ~(1 << LED_PIN); // Force pin LOW
+            TCCR0A &= ~(1 << COM0A1);
+            PORTB &= ~(1 << LED_PIN);
         } else {
-            TCCR0A |= (1 << COM0A1);  // Reconnect PWM hardware
+            TCCR0A |= (1 << COM0A1);
         }
     }
 
     switch (g_mode) {
         case MODE_OFF:
-            // PWM disconnected in the change detection block above
             break;
 
         case MODE_DIM_25:
-            OCR0A = 64;   // ~25% duty cycle
+            OCR0A = 64;
             break;
 
         case MODE_DIM_50:
-            OCR0A = 127;  // ~50% duty cycle
+            OCR0A = 127;
             break;
 
         case MODE_DIM_75:
-            OCR0A = 191;  // ~75% duty cycle
+            OCR0A = 191;
             break;
 
         case MODE_ON_100:
-            OCR0A = 255;  // 100% duty cycle
+            OCR0A = 255;
             break;
 
         case MODE_BREATHE:
             if ((now - last_update) >= FADE_STEP_MS) {
                 last_update = now;
-                
-                // Linear fade logic
                 brightness += fade_dir;
                 if (brightness == 0 || brightness == 255) {
                     fade_dir = -fade_dir;
@@ -196,18 +178,14 @@ static void task_led(void) {
     }
 }
 
-// ======================== MAIN LOOP ========================
-
 int main(void) {
     hardware_init();
-    sei(); // Global interrupts enabled
+    sei();
 
     while (1) {
         task_button();
         task_led();
         
-        // Sleep in Idle mode between tasks to save power
-        // The Timer1 interrupt will wake us up every 1ms
         sleep_enable();
         sleep_cpu();
         sleep_disable();
