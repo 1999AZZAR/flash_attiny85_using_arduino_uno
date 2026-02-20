@@ -4,30 +4,42 @@ This document outlines the procedure for using an Arduino Uno as an ISP programm
 
 ## 1. Hardware Requirements
 
-### Core Components
+### Complete Development BOM (Bill of Materials)
 
-* **Programmer:** Arduino Uno (or compatible)
-* **Target:** ATtiny85 Microcontroller
-* **Reset Capacitor:** 10µF - 100µF Electrolytic Capacitor (see below)
-* **Status LED (Optional):** LED + 220Ω Resistor for PB0 (Pin 5)
+To build the full development circuit capable of running all examples in this repository, you will need:
 
-### Capacitor Placement
+| Component | Quantity | Purpose | Placement |
+|---|---|---|---|
+| **ATtiny85** | 1 | Microcontroller | Breadboard center |
+| **Arduino Uno** | 1 | ISP Programmer | Connected via jumper wires |
+| **Capacitor (10µF - 100µF)** | 2 | 1x Programmer Stability<br>1x Target Power Stability | **Cap 1:** Uno `RESET` to `GND`<br>**Cap 2:** ATtiny `VCC` to `GND` |
+| **Push Button** | 2 | 1x User Input<br>1x System Reset | **Btn 1:** `PB3` (Pin 2) to `GND`<br>**Btn 2:** `RESET` (Pin 1) to `GND` |
+| **LED** | 1 | Output Indicator | `PB0` (Pin 5) to `GND` |
+| **Resistor (220Ω)** | 1 | Current Limiting | In series with LED |
 
-**Arduino Uno (Programmer):**
-*   Place the **10µF - 100µF Capacitor** between `RESET` and `GND`.
-*   **Polarity:** Positive (+) leg to `RESET`, Negative (-) leg to `GND`.
-*   **Purpose:** Prevents the Arduino Uno from auto-resetting during the upload process.
+### Capacitor Placement Detail
 
-### Signal Routing
+1.  **Programmer Anti-Reset (Crucial):**
+    *   Place a **10µF - 100µF Capacitor** between Arduino Uno `RESET` and `GND`.
+    *   **Polarity:** Positive (+) to `RESET`, Negative (-) to `GND`.
+    *   **Why:** Prevents the Uno from resetting itself when avrdude tries to talk to it.
 
-| ATtiny85 Physical Pin | Function | Arduino Uno Pin |
-| --- | --- | --- |
-| Pin 1 | RESET | Digital 10 |
-| Pin 4 | GND | GND |
-| Pin 5 | PB0 (MOSI) | Digital 11 |
-| Pin 6 | PB1 (MISO) | Digital 12 |
-| Pin 7 | PB2 (SCK) | Digital 13 |
-| Pin 8 | VCC | 5V |
+2.  **Target Power Smoothing:**
+    *   Place a **100µF Capacitor** on the breadboard power rails (or close to ATtiny `VCC`/`GND`).
+    *   **Why:** Smooths out voltage dips when the LED flashes or the MCU wakes from sleep.
+
+### Complete Pinout & Connections
+
+| Physical Pin | Function (Port) | ISP Connection (Uno) | Development Connection |
+| :---: | :--- | :--- | :--- |
+| **1** | **RESET** / PB5 | Digital 10 | **Button 2** (Reset) → GND |
+| **2** | PB3 / ADC3 | *Unconnected* | **Button 1** (Input) → GND |
+| **3** | PB4 / ADC2 | *Unconnected* | *(Unused / Analog In)* |
+| **4** | **GND** | GND | **GND Rail** / Cap (-) |
+| **5** | PB0 / MOSI | Digital 11 | **LED** (Anode) |
+| **6** | PB1 / MISO | Digital 12 | **Serial TX** (Optional) |
+| **7** | PB2 / SCK | Digital 13 | *(Unused)* |
+| **8** | **VCC** | 5V | **VCC Rail** / Cap (+) |
 
 ---
 
@@ -116,6 +128,6 @@ avrdude -c arduino -p t85 -P /dev/ttyACM0 -b 19200 -U flash:w:firmware.hex:i
 
 ## 5. Troubleshooting Hardware Logic
 
-* **Signature 0x000000:** Check Pin 11 (MOSI) and Pin 13 (SCK). Ensure the Reset capacitor on the Uno is correctly seated and polarized.
-* **Verification Mismatch:** Indicates power instability or floating pins. Check all jumper wire connections.
-* **Device Not Found:** Ensure your user is in the `dialout` group: `sudo usermod -a -G dialout $USER`.
+*   **Signature 0x000000:** Check Pin 11 (MOSI) and Pin 13 (SCK). Ensure the Reset capacitor on the Uno is correctly seated and polarized.
+*   **Verification Mismatch:** Indicates power instability. Ensure the **Target Power Capacitor** is installed.
+*   **Device Not Found:** Ensure your user is in the `dialout` group: `sudo usermod -a -G dialout $USER`.
