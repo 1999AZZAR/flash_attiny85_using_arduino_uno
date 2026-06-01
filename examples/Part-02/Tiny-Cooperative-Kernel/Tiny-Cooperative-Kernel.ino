@@ -43,6 +43,10 @@ static void timer_init(void)
 
 typedef void (*task_func_t)(void);
 
+// Forward declarations
+static void kernel_add_task(uint8_t id, task_func_t func, uint32_t interval);
+static void kernel_run(void);
+
 typedef struct
 {
     task_func_t func;
