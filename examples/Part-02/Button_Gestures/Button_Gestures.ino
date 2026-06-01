@@ -62,6 +62,9 @@ typedef enum {
     EVENT_LONG_PRESS_RELEASE
 } event_t;
 
+static void handle_event(event_t e);
+static void button_task(void);
+
 static void handle_event(event_t e) {
     switch (e) {
         case EVENT_SINGLE_CLICK:
