@@ -47,6 +47,8 @@ typedef enum {
     EVENT_TICK_500MS
 } event_t;
 
+static void post_event(event_t e);
+
 volatile event_t pending_event = EVENT_NONE;
 
 static void post_event(event_t e)
@@ -61,6 +63,11 @@ typedef enum {
     STATE_ON,
     STATE_BLINK
 } state_t;
+
+static void state_idle(event_t e);
+static void state_on(event_t e);
+static void state_blink(event_t e);
+static void dispatch(event_t e);
 
 static state_t current_state;
 

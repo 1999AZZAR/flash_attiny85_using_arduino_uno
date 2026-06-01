@@ -47,6 +47,9 @@ typedef enum {
     STATE_BLINK
 } state_t;
 
+static void state_enter(state_t s);
+static void state_transition(state_t next);
+
 static state_t current_state;
 
 static void state_enter(state_t s)

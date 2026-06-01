@@ -49,6 +49,9 @@ typedef enum {
     EVENT_TICK_500MS
 } event_t;
 
+static void post_event(event_t e);
+static event_t get_event(void);
+
 typedef struct {
     event_t buffer[QUEUE_SIZE];
     uint8_t head;
@@ -94,6 +97,10 @@ typedef enum {
     STATE_BLINK,
     STATE_COUNT
 } state_t;
+
+static void state_idle(event_t e);
+static void state_on(event_t e);
+static void state_blink(event_t e);
 
 typedef void (*state_handler_t)(event_t);
 
