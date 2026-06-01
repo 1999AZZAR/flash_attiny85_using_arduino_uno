@@ -70,12 +70,14 @@ make flash
 ### Real-Time Control
 *   **[Closed Loop Motor Control](examples/Part-02/Closed-Loop-Motor-Control/)**: A high-performance PI controller maintaining exactly **1440 RPM** via Hall Sensor feedback. Demonstrates **Adaptive Soft-Start**, **16MHz PLL Clock**, and **Interrupt-based Precision Timing**.
 
-### System Architecture & Power
+### System Architecture & Safety
 *   **[Tiny Cooperative Kernel](examples/Part-02/Tiny-Cooperative-Kernel/)**: A lightweight, non-preemptive task scheduler. Executes functions at fixed intervals without an RTOS.
 *   **[Low Power Sleep Wake](examples/Part-02/Low-Power-Sleep-Wake/)**: Demonstrates Deep Sleep (Power-Down) with Pin Change Interrupt wakeup for battery-powered devices.
 *   **[Watchdog Timer Scheduler](examples/Part-02/Watchdog-Timer-Scheduler/)**: Uses the Watchdog Timer as a low-power system tick for tasks that don't require high precision.
+*   **[Watchdog Reset Safety](examples/Part-02/Watchdog_Reset_Safety/)**: Demonstrates using the WDT as a system supervisor to recover from software hangs (Reset mode).
 
-### Communication & Storage
+### Communication, Input & Storage
+*   **[Button Gestures](examples/Part-02/Button_Gestures/)**: Implements Short Click, Double Click, and Long Press detection using a single button.
 *   **[Bit Banged UART TX](examples/Part-02/Bit-Banged-UART-TX/)**: Software-based Serial Transmit (9600 baud) for debugging without hardware UART.
 *   **[EEPROM Persistent State](examples/Part-02/EEPROM_Persistent_State/)**: Saves state across power cycles using the internal EEPROM memory.
 
