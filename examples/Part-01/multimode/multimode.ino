@@ -5,7 +5,7 @@
  * Logic:
  * - Timer1: 1ms system tick (CTC mode)
  * - Timer0: Fast PWM (OC0A -> PB0) for dimming & fast pulsing
- * - Sequence: OFF > 15% > 30% > 60% > 100% > Flashing (Fast Pulse)
+ * - Sequence: OFF > 15% > 30% > 60% > 100% > SOS (Morse)
  * 
  * Target: ATtiny85 @ 8MHz Internal Oscillator
  */
@@ -26,7 +26,7 @@
 #define BTN_PIN         PB3   // Input (Pin 2)
 
 #define DEBOUNCE_MS     50U   // 50ms stable window
-#define FLASH_STEP_MS   6U    // Fast pulsing (approx 3s full cycle)
+#define SOS_UNIT_MS     3200U  // 1 Morse unit (dot duration)
 
 // ======================== GLOBAL STATE ========================
 
@@ -36,9 +36,21 @@ typedef enum {
     MODE_DIM_30,
     MODE_DIM_60,
     MODE_ON_100,
-    MODE_FLASHING,
+    MODE_SOS,
     MODE_MAX
 } mode_t;
+
+static const uint8_t sos_pattern[] = {
+    1,1, 1,0,
+    1,1, 1,0,
+    1,1, 3,0,
+    3,1, 1,0,
+    3,1, 1,0,
+    3,1, 3,0,
+    1,1, 1,0,
+    1,1, 1,0,
+    1,1, 7,0,
+};
 
 static volatile uint32_t g_tick = 0;
 static mode_t g_mode = MODE_OFF;
@@ -106,18 +118,15 @@ static void task_button(void) {
 
 static void task_led(void) {
     static uint32_t last_update = 0;
-    static uint8_t brightness = 0;
-    static int8_t fade_dir = 1;
+    static uint8_t sos_step = 0;
 
     uint32_t now = millis();
 
     if (g_mode_changed) {
         last_update = now;
-        brightness = 0;
-        fade_dir = 1;
+        sos_step = 0;
         g_mode_changed = 0;
-        
-        // --- MODE MANAGEMENT LOGIC ---
+
         if (g_mode == MODE_OFF) {
             TCCR0A &= ~(1 << COM0A1); // Disconnect PWM
             PORTB &= ~(1 << LED_PIN); // Physical LOW
@@ -131,30 +140,27 @@ static void task_led(void) {
             break;
 
         case MODE_DIM_15:
-            OCR0A = 38;   // ~15% duty cycle
+            OCR0A = 38;
             break;
 
         case MODE_DIM_30:
-            OCR0A = 77;   // ~30% duty cycle
+            OCR0A = 77;
             break;
 
         case MODE_DIM_60:
-            OCR0A = 153;  // ~60% duty cycle
+            OCR0A = 153;
             break;
 
         case MODE_ON_100:
             OCR0A = 255;
             break;
 
-        case MODE_FLASHING:
-            if ((now - last_update) >= FLASH_STEP_MS) {
+        case MODE_SOS:
+            if ((now - last_update) >= ((uint32_t)sos_pattern[sos_step * 2] * SOS_UNIT_MS)) {
                 last_update = now;
-                brightness += fade_dir;
-                if (brightness == 0 || brightness == 255) {
-                    fade_dir = -fade_dir;
-                }
-                OCR0A = brightness;
+                sos_step = (sos_step + 1) % (sizeof(sos_pattern) / 2);
             }
+            OCR0A = sos_pattern[sos_step * 2 + 1] ? 255 : 0;
             break;
 
         default:
